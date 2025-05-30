@@ -9,14 +9,19 @@ CHANNEL_ID = os.getenv("CHANNEL_ID")
 # === Чтение первого поста из очереди ===
 def get_next_post():
     with open('posts/queue.txt', 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    if not lines:
-        print("Очередь постов пуста.")
-        return None
-    first_line = lines[0].strip()
-    with open('posts/queue.txt', 'w', encoding='utf-8') as f:
-        f.writelines(lines[1:])
-    return first_line
+        content = f.read().strip()
+
+    if '---' in content:
+        post, rest = content.split('---', 1)
+        post = post.strip()
+        with open('posts/queue.txt', 'w', encoding='utf-8') as f:
+            f.write(rest.strip())
+        return post
+    else:
+        post = content.strip()
+        with open('posts/queue.txt', 'w', encoding='utf-8') as f:
+            f.write('')
+        return post
 
 # === Отправка поста в Telegram ===
 def send_to_telegram(text):
