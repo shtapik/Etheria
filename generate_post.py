@@ -1,39 +1,43 @@
 import os
 import requests
 import json
+import random
+import time
 
 # === Настройки API ===
-QWEN_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation" 
-QWEN_API_KEY = os.getenv("QWEN_API_KEY")  # Берём из Secrets
+API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation" 
+API_KEY = os.getenv("DASHSCOPE_API_KEY")
+
 HEADERS = {
-    "Authorization": f"Bearer {QWEN_API_KEY}",
+    "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
 
 # === Темы для генерации ===
 TOPICS = [
-    "Конфликт за Этерий-кристалл между Арканией и Тиранией",
-    "Протесты в университетах Сералии против цензуры",
-    "Фредония начинает военную операцию у границы с Сералией",
-    "Мираника запускает новый тип нейроинтерфейса на основе Нейропласта",
-    "Аркания предлагает международное соглашение по климату"
+    "Аркания начинает добычу Этерий-кристалла",
+    "Сералия ограничивает импорт технологий Мираники",
+    "Фредония проводит учения у границ Сералии",
+    "Мираника представляет новый тип нейроинтерфейса",
+    "Тирания объявляет о частичной мобилизации"
 ]
 
-# === Генерация текста от ИИ ===
-def generate_with_qwen(topic):
+# === Генерация текста через API ===
+def generate_with_ai(prompt):
     payload = {
         "model": "qwen-plus",
         "input": {
-            "prompt": f"Напиши политическую сводку о мире Этерии. Тема: {topic}"
+            "prompt": f"Напиши политическую сводку о мире Этерии. Тема: {prompt}"
         },
         "parameters": {
             "temperature": 0.7,
             "top_p": 0.8,
-            "max_tokens": 300
+            "max_tokens": 512
         }
     }
 
-    response = requests.post(QWEN_API_URL, headers=HEADERS, data=json.dumps(payload))
+    response = requests.post(API_URL, headers=HEADERS, data=json.dumps(payload))
+    
     if response.status_code == 200:
         return response.json()['output']['text']
     else:
@@ -41,22 +45,21 @@ def generate_with_qwen(topic):
         return None
 
 # === Добавление поста в очередь ===
-def add_to_queue(post):
+def add_to_queue(post_text):
     with open('posts/queue.txt', 'a', encoding='utf-8') as f:
-        f.write(f'''🗞️ Политическая сводка — {post.split(" ")[0]}
-🔹 {post.strip()}
+        f.write(f'''🗞️ Политическая сводка — {post_text.split(" ")[0]}
+🔹 {post_text.strip()}
 ---
 ''')
 
 # === Основная функция ===
 if __name__ == '__main__':
-    import random
     topic = random.choice(TOPICS)
     print(f"[INFO] Генерация поста по теме: {topic}")
     
-    post_text = generate_with_qwen(topic)
-    if post_text:
-        add_to_queue(post_text)
+    post = generate_with_ai(topic)
+    if post:
+        add_to_queue(post)
         print("[SUCCESS] Пост добавлен в очередь.")
     else:
         print("[ERROR] Не удалось получить текст от ИИ.")
