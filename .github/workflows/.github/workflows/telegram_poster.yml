@@ -1,9 +1,9 @@
-name: Автопостинг в Telegram
+name: Ежедневная генерация и публикация поста
 
 on:
   schedule:
-    - cron: "0 9 * * *"  # Ежедневно в 09:00 UTC
-  workflow_dispatch:     # Возможность запуска вручную
+    - cron: "0 9 * * *"  # Каждый день в 9:00 UTC
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,9 +15,15 @@ jobs:
       - name: Установить зависимости
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install requests python-dotenv
 
-      - name: Запустить скрипт
+      - name: Сгенерировать пост от ИИ
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: |
+          python generate_post.py
+
+      - name: Опубликовать пост в Telegram
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
